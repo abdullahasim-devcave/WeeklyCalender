@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weekly Calendar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f2f0;
+    }
+    #head {
+        height: 40px;
+        width:300px;
+        size:30px;
+        text-align: center;
+        margin-left: 490px;
+        background-color: black;
+        color: white;
+        border-radius: 15px;
+        padding:5px;
+    }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(24, 50px);
+      gap: 2px;
+      max-width: 100%;
+      border: 2px solid black;
+    }
+    .cell {
+    background-color: #e6e6e6;
+    border: 1px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    padding: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    }
+    .cell.selected {
+    background-color: green;
+    color: white;
+    font-weight: bold;
+    }
+    .head{
+        text-align: center;
+        font-weight: bold;
+    }
+    #clear{
+        margin-bottom: 5px;
+        margin-left: 1225px;
+    }
+    #export{
+        margin-bottom: 5px;
+        border:1px solid black;
+        background-color: black;
+        height:40px;
+        width:200px;
+        color:white;
+        border-radius: 10px;
+        margin-left: 550px;
+        
+    }
+  </style>
+</head>
+<body>
+    <h1 class="head">Weekly Calendar</h1>
+
+  <h2 id="head">Available Slots:</h2>
+  <button id="export">Export Selected Slots</button>
+  <button id="clear">Clear All</button>
+  <div id="grid"></div>
+
+
+  <script>
+  let slots = 0;
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const container = document.getElementById("grid");
+
+  let selectedSlots = JSON.parse(localStorage.getItem("selectedSlots")) || [];
+
+  for (let i = 0; i < 24; i++) {
+    for (let j = 0; j < 7; j++) {
+        let hour=i;
+        let day=j;
+      const timeStr = `${days[day]} ${hour.toString().padStart(2, '0')}:00`;
+      const key = `${days[day]}_${hour.toString().padStart(2, '0')}`;
+
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.textContent = timeStr;
+      div.title=key+":00";
+
+      if (selectedSlots.includes(key)) {
+        div.classList.add("selected");
+        slots++;
+      }
+
+      div.addEventListener("click", () => {
+        div.classList.toggle("selected");
+        if (div.classList.contains("selected")) {
+          if (!selectedSlots.includes(key)) {
+            selectedSlots.push(key);
+            slots++;
+          }
+        } else {
+          selectedSlots = selectedSlots.filter(item => item !== key);
+          slots--;
+        }
+
+        localStorage.setItem("selectedSlots", JSON.stringify(selectedSlots));
+        console.log("Selected Slots: ",selectedSlots);
+        document.getElementById("head").innerHTML = `Available Slots: ${slots}`;
+      });
+
+      container.appendChild(div);
+    }
+  }
+
+  function clearAll() {
+    const selectedCells = document.querySelectorAll(".cell.selected");
+
+    selectedCells.forEach(cell => {
+        cell.classList.remove("selected");
+    });
+
+    localStorage.removeItem("selectedSlots");
+    slots = 0;
+    document.getElementById("head").innerHTML = `Available Slots: ${slots}`;
+  }
+
+
+  function exportSelected() {
+    const data = JSON.stringify(selectedSlots, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "selected_slots.json";
+    link.click();
+
+    URL.revokeObjectURL(url); 
+  }
+
+
+
+
+  document.getElementById("head").innerHTML = `Available Slots: ${slots}`;
+  document.getElementById("clear").addEventListener("click",clearAll);
+  document.getElementById("export").addEventListener("click", exportSelected);
+</script>
+
+
+</body>
+</html>
